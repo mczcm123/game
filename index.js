@@ -1704,6 +1704,11 @@ document.getElementById('shootButton').addEventListener('touchend', virtualShoot
 document.getElementById('shootButton').addEventListener('mousedown', virtualShootStart);
 document.getElementById('shootButton').addEventListener('mouseup', virtualShootEnd);
 
+document.getElementById('scopeButton').addEventListener('touchstart', virtualScopeStart);
+document.getElementById('scopeButton').addEventListener('touchend', virtualScopeEnd);
+document.getElementById('scopeButton').addEventListener('mousedown', virtualScopeStart);
+document.getElementById('scopeButton').addEventListener('mouseup', virtualScopeEnd);
+
 document.getElementById('shopBtn').addEventListener('touchstart', virtualOpenShop);
 document.getElementById('shopBtn').addEventListener('click', virtualOpenShop);
 
@@ -2114,6 +2119,19 @@ function virtualReload(e) {
     if (gameRunning && !shopActive && !cheatActive && !weaponWheelActive && !pauseMenuActive) {
         reload();
     }
+}
+
+// 虚拟瞄准按钮
+function virtualScopeStart(e) {
+    e.preventDefault();
+    if (gameRunning && !shopActive && !cheatActive && !weaponWheelActive && !pauseMenuActive) {
+        isScoped = true;
+    }
+}
+
+function virtualScopeEnd(e) {
+    e.preventDefault();
+    isScoped = false;
 }
 
 // 虚拟摇杆函数虚拟商店按钮
