@@ -704,6 +704,30 @@
             transform: scale(0.95);
         }
         
+        /* 瞄准按钮 */
+        #scopeButton {
+            position: absolute;
+            bottom: 120px;
+            right: 30px;
+            width: 80px;
+            height: 80px;
+            background: rgba(233, 69, 96, 0.3);
+            border-radius: 50%;
+            border: 3px solid rgba(233, 69, 96, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: #e94560;
+            pointer-events: auto;
+            touch-action: none;
+        }
+        
+        #scopeButton:active {
+            background: rgba(233, 69, 96, 0.6);
+            transform: scale(0.95);
+        }
+        
         /* 功能按钮 */
         #actionButtons {
             position: absolute;
