@@ -27,6 +27,7 @@
         </div>
         <div id="scopeOverlay"></div>
         <div id="damageOverlay"></div>
+        <canvas id="weaponModel" width="800" height="600"></canvas>
         <div id="ui">
             <div id="health">生命: 150</div>
             <div id="ammo">弹药: 100</div>
@@ -39,7 +40,7 @@
         </div>
         <div id="startScreen">
             <h1>末日余生</h1>
-            <p id="version">V1.0.2</p>
+            <p id="version">V1.0.3</p>
             <button class="btn" id="startBtn">开始游戏</button>
             <button class="btn" id="settingsBtn">设置</button>
             <button class="btn" id="userCenterBtn">用户中心</button>
@@ -58,7 +59,7 @@
                 <div class="settingsTab" id="tabContentSensitivity">
                     <label>
                         <span>视角灵敏度</span>
-                        <input type="range" id="sensitivitySlider" min="0.5" max="3" step="0.1" value="1">
+                        <input type="range" id="sensitivitySlider" min="0.05" max="3" step="0.05" value="1">
                         <span id="sensitivityValue">1.0x</span>
                     </label>
                     <label>
@@ -77,6 +78,14 @@
                         <span>敌人雷达<span class="experimental">实验性</span></span>
                         <div class="toggleSwitch" id="toggleRadar"></div>
                     </label>
+                    <label>
+                        <span>武器模型<span class="experimental">实验性</span></span>
+                        <div class="toggleSwitch active" id="toggleWeaponModel"></div>
+                    </label>
+                    <label>
+                        <span>开镜晃动<span class="experimental">实验性</span></span>
+                        <div class="toggleSwitch" id="toggleScopeShake"></div>
+                    </label>
                 </div>
                 
                 <!-- 移动端设置 -->
@@ -88,6 +97,10 @@
                     <label>
                         <span>竖屏模式</span>
                         <div class="toggleSwitch" id="togglePortrait"></div>
+                    </label>
+                    <label>
+                        <span>半屏摇杆<span class="unavailable">不可用</span></span>
+                        <div class="toggleSwitch" id="toggleHalfScreenJoystick"></div>
                     </label>
                     <label>
                         <span>自动瞄准吸附</span>
@@ -142,7 +155,7 @@
                             </div>
                             <div class="controlItem">
                                 <span class="key">0</span>
-                                <span class="desc">打开作弊菜单</span>
+                                <span class="desc">打开密码界面</span>
                             </div>
                         </div>
                     </div>
@@ -252,20 +265,23 @@
             <div id="joystick"></div>
         </div>
         
+        <!-- 疾跑按钮 -->
+        <div id="sprintButton" title="疾跑(Shift)">疾跑开关</div>
+        
         <!-- 射击按钮 -->
-        <div id="shootButton" title="射击">左键</div>
+        <div id="shootButton" title="射击">射击</div>
         
         <!-- 换弹按钮 -->
-        <div id="reloadButton" title="换弹(R)">R</div>
+        <div id="reloadButton" title="换弹(R)">换弹</div>
         
         <!-- 瞄准按钮 -->
-        <div id="scopeButton" title="开镜瞄准(右键)">右键</div>
+        <div id="scopeButton" title="开镜瞄准(右键)">瞄准</div>
         
         <!-- 功能按钮 -->
         <div id="actionButtons">
-            <div class="actionBtn" id="shopBtn" title="商店">5</div>
-            <div class="actionBtn" id="weaponBtn" title="武器轮盘">8</div>
-            <div class="actionBtn" id="cheatBtn" title="作弊菜单">0</div>
+            <div class="actionBtn" id="shopBtn" title="商店">商店</div>
+            <div class="actionBtn" id="weaponBtn" title="武器轮盘">武器</div>
+            <div class="actionBtn" id="cheatBtn" title="作弊菜单">密码</div>
         </div>
         
         <!-- 视角控制滑块 -->
