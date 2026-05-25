@@ -15,6 +15,23 @@
     box-shadow: none !important;
 }
 
+/* 不可用标签样式 */
+.unavailable {
+    background-color: #DC2626 !important;
+    background: #DC2626 !important;
+    color: #ffffff !important;
+    padding: 2px 8px !important;
+    border-radius: 4px !important;
+    font-size: 12px !important;
+    font-weight: normal !important;
+    margin-left: 8px !important;
+    display: inline-block !important;
+    line-height: 1.5 !important;
+    border: none !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+}
+
         * {
             margin: 0;
             padding: 0;
@@ -317,7 +334,8 @@
             transition: opacity 0.1s;
         }
         #crosshair.scoped {
-            opacity: 0.7;
+            opacity: 0;
+            pointer-events: none;
         }
         #crosshair::before, #crosshair::after {
             content: '';
@@ -416,13 +434,31 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(transparent 30%, rgba(0,0,0,0.7) 70%, rgba(0,0,0,0.9));
+            background: radial-gradient(circle at center, transparent 15%, rgba(0,0,0,0.3) 20%, rgba(0,0,0,0.85) 50%, rgba(0,0,0,0.95) 100%);
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.15s;
+            overflow: hidden;
+        }
+        #scopeOverlay::before {
+            /* 已移除准星，由JS绘制 */
+        }
+        #scopeOverlay::after {
+            /* 已移除中心点，由JS绘制 */
         }
         #scopeOverlay.scoped {
             opacity: 1;
+        }
+        
+        /* 武器模型画布 */
+        #weaponModel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 6;
         }
         #damageOverlay {
             position: absolute;
@@ -728,6 +764,31 @@
             transform: scale(0.95);
         }
         
+        /* 疾跑按钮 */
+        #sprintButton {
+            position: absolute;
+            bottom: 30px;
+            left: 160px;
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 165, 0, 0.3);
+            border-radius: 50%;
+            border: 3px solid rgba(255, 165, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: #FFA500;
+            pointer-events: auto;
+            touch-action: none;
+            opacity: 0.7;
+        }
+        
+        #sprintButton.active {
+            background: rgba(255, 165, 0, 0.7);
+            opacity: 1;
+        }
+        
         /* 功能按钮 */
         #actionButtons {
             position: absolute;
@@ -847,3 +908,24 @@
     justify-content: flex-start;
     padding-top: 60px;
 }
+
+/* 竖屏模式下游戏说明改为2列 */
+.portrait .controlsGrid {
+    flex-wrap: wrap;
+    max-width: 400px;
+}
+.portrait .controlsColumn {
+    min-width: 150px;
+}
+
+/* 竖屏模式下商店按钮改为2列 */
+.portrait .shopRow {
+    flex-wrap: wrap;
+    max-width: 100%;
+}
+.portrait .shopColumn {
+    min-width: 45%;
+    flex: 1;
+}
+
+/* 竖屏模式下瞄准镜适配 - 已移除，使用JS动态计算 */
