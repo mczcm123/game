@@ -39,7 +39,8 @@ const DOM = {
     actionButtons: document.getElementById('actionButtons'),
     sensitivitySlider: document.getElementById('sensitivitySlider'),
     sensitivityValue: document.getElementById('sensitivityValue'),
-    gameContainer: document.getElementById('gameContainer')
+    gameContainer: document.getElementById('gameContainer'),
+    weaponModel: document.getElementById('weaponModel')
 };
 
 const SCREEN_WIDTH = canvas.width;
@@ -67,12 +68,12 @@ const map = [
     [1,0,0,0,0,0,1,0,0,1,0,1,1,0,1,0,0,1,0,0,0,0,0,1],
     [1,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,1],
     [1,0,0,0,0,0,1,1,1,1,1,0,0,1,1,1,1,1,0,0,0,0,0,1],
-    [1,0,0,1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,1,0,0,1],
+    [1,0,0,1,0,0,1,0,0,0,1,0,0,1,0,0,0,1,0,0,1,0,0,1],
     [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1],
     [1,0,0,1,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,1,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,1,0,0,0,1,0,0,1,0,0,0,1,0,0,0,0,0,1],
     [1,0,0,1,0,0,1,1,1,1,1,0,0,1,1,1,1,1,0,0,1,0,0,1],
-    [1,0,0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,0,1],
+    [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1],
     [1,0,0,1,0,0,1,0,0,1,0,1,1,0,1,0,0,1,0,0,1,0,0,1],
     [1,0,0,0,0,0,1,0,1,1,0,0,0,0,1,1,0,1,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
@@ -129,8 +130,24 @@ let radarEnabled = false;
 let gameStartTime = 0;
 let virtualControlsEnabled = false;
 let portraitMode = false;
+let halfScreenJoystick = false; // 半屏摇杆模式
 let autoAimEnabled = false;
 let autoAimStrength = 90; // 吸附角度范围（度）
+let virtualSprintActive = false; // 虚拟疾跑
+let sprintToggleState = false; // 疾跑开关状态
+let weaponModelEnabled = true; // 武器模型开关
+let scopeShakeEnabled = false; // 开镜晃动开关
+
+// 武器动画相关
+let weaponRecoil = 0; // 后坐力
+let weaponBob = 0; // 行走晃动
+let weaponSway = 0; // 武器摇摆
+let weaponReloadProgress = 0; // 换弹进度
+let weaponScopeZoom = 1; // 开镜缩放
+let scopeShake = 0; // 开镜镜头晃动
+let scopeShakeX = 0; // 开镜晃动X偏移
+let scopeShakeY = 0; // 开镜晃动Y偏移
+let weaponModelCtx = null;
 
 // 虚拟按键相关
 let joystickActive = false;
@@ -138,6 +155,7 @@ let joystickStartX = 0;
 let joystickStartY = 0;
 let joystickDeltaX = 0;
 let joystickDeltaY = 0;
+let joystickTouchId = null; // 用于追踪触摸ID
 
 // 视角控制滑块相关
 let cameraSliderActive = false;
@@ -151,28 +169,44 @@ const defaultStats = {
     sniper: { damage: 70, fireRate: 21, canAutoFire: false, isDual: false, spread: 0.18, spreadVertical: 0.09, zoom: 2.0, magazineSize: 20, reloadTime: 150 },
     lmg: { damage: 20, fireRate: 15, canAutoFire: false, isDual: true, spread: 0.11, spreadVertical: 0.055, zoom: 1.25, magazineSize: 100, reloadTime: 300 }
 };
-let enemiesPerWave = 3;
+let enemiesPerWave = 6;
 
 const ENEMY_TYPES = {
     zombie: { color: '#6b8e4e', health: 30, speed: 0.012, damage: 5, score: 100, size: 0.32, attackRange: 1.5, isRanged: false },
     demon: { color: '#ff4444', health: 60, speed: 0.015, damage: 8, score: 200, size: 0.38, attackRange: 1.5, isRanged: false },
-    crawler: { color: '#aa44cc', health: 20, speed: 0.05, damage: 3, score: 150, size: 0.28, attackRange: 1.2, isRanged: false },
+    crawler: { color: '#aa44cc', health: 20, speed: 0.025, damage: 3, score: 150, size: 0.28, attackRange: 1.2, isRanged: false },
     boss: { color: '#ff0000', health: 500, speed: 0.02, damage: 20, score: 2000, size: 0.5, attackRange: 2, isRanged: false },
     bigBoss: { color: '#ff0066', health: 800, speed: 0.015, damage: 30, score: 5000, size: 0.6, attackRange: 2.5, isRanged: false },
-    shooter: { color: '#4488ff', health: 15, speed: 0.018, damage: 10, score: 180, size: 0.25, attackRange: 6, isRanged: true, shootCooldown: 120 }
+    shooter: { color: '#4488ff', health: 15, speed: 0.018, damage: 10, score: 180, size: 0.25, attackRange: 6, isRanged: true, shootCooldown: 120 },
+    shadow: { color: '#00ffff', health: 45, speed: 0.018, damage: 6, score: 250, size: 0.35, attackRange: 1.5, isRanged: false, showOutline: true }
 };
 
 function spawnEnemy(typeOverride = null) {
     let type = typeOverride;
     if (!type) {
-        const types = Object.keys(ENEMY_TYPES).filter(t => t !== 'boss' && t !== 'bigBoss');
         if (wave < 3) type = 'zombie';
-        else if (wave < 5) type = Math.random() > 0.4 ? 'zombie' : 'shooter';
-        else if (wave < 8) {
-            type = types[Math.floor(Math.random() * types.length)];
+        else if (wave < 5) {
+            const rand = Math.random();
+            if (rand > 0.5) type = 'zombie';
+            else if (rand > 0.25) type = 'crawler';
+            else type = 'shooter';
+        } else if (wave < 8) {
+            const rand = Math.random();
+            if (rand > 0.4) type = 'zombie';
+            else if (rand > 0.2) type = 'crawler';
+            else if (rand > 0.05) type = 'demon';
+            else type = 'shooter';
         } else {
-            type = Math.random() > 0.3 ? types[Math.floor(Math.random() * types.length)] : 'shooter';
+            const rand = Math.random();
+            if (rand > 0.35) type = 'zombie';
+            else if (rand > 0.15) type = 'crawler';
+            else if (rand > 0.05) type = 'demon';
+            else type = 'shooter';
         }
+    }
+    
+    if (wave >= 4 && Math.random() > 0.7) {
+        type = 'shadow';
     }
     
     let x, y;
@@ -245,9 +279,19 @@ function render() {
     let zoom = isScoped ? defaultStats[currentWeapon].zoom : 1;
     let currentFOV = FOV / zoom;
     
+    // 更新开镜晃动
+    if (isScoped && scopeShakeEnabled) {
+        scopeShake += 0.1;
+        scopeShakeX = Math.sin(scopeShake * 2) * 3 + Math.sin(scopeShake * 0.7) * 2;
+        scopeShakeY = Math.cos(scopeShake * 1.5) * 3 + Math.cos(scopeShake * 0.5) * 2;
+    } else {
+        scopeShakeX = 0;
+        scopeShakeY = 0;
+    }
+    
     let rayWidth = SCREEN_WIDTH / NUM_RAYS;
     
-    let verticalOffset = pitch / (Math.PI * 85 / 180) * SCREEN_HEIGHT * 0.25;
+    let verticalOffset = pitch / (Math.PI * 85 / 180) * SCREEN_HEIGHT * 0.25 + scopeShakeY;
     
     for (let i = 0; i < NUM_RAYS; i++) {
         let rayAngle = player.angle - currentFOV / 2 + (i / NUM_RAYS) * currentFOV;
@@ -287,6 +331,113 @@ function render() {
     renderMinimap();
     
     updateScopeUI();
+    drawWeaponModel();
+    drawScopeCrosshair();
+}
+
+// 绘制瞄准镜（不受武器模型开关影响）
+function drawScopeCrosshair() {
+    if (!isScoped) return;
+    
+    let scopeX = SCREEN_WIDTH / 2;
+    let scopeY = SCREEN_HEIGHT / 2;
+    
+    // 竖屏模式下瞄准镜缩小并上移
+    let isPortrait = portraitMode && window.innerHeight > window.innerWidth;
+    let scopeScale = isPortrait ? 0.6 : 1;
+    let scopeOffsetY = isPortrait ? -SCREEN_HEIGHT * 0.1 : 0;
+    
+    scopeY += scopeOffsetY;
+    
+    // 狙击枪用圆形瞄准镜，其他武器用方框
+    if (currentWeapon === 'sniper') {
+        // 狙击枪 - 圆形瞄准镜
+        let scopeSize = Math.min(SCREEN_WIDTH, SCREEN_HEIGHT) * 0.18 * scopeScale;
+        
+        // 瞄准镜边框
+        ctx.strokeStyle = 'rgba(60, 60, 60, 0.8)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(scopeX, scopeY, scopeSize, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // 内部装饰圈
+        ctx.strokeStyle = 'rgba(80, 80, 80, 0.5)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(scopeX, scopeY, scopeSize * 0.7, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // 细十字线（在瞄准镜内）
+        ctx.strokeStyle = 'rgba(255, 100, 100, 0.6)';
+        ctx.lineWidth = 0.5;
+        let lineLen = scopeSize * 0.6;
+        ctx.beginPath();
+        // 水平线
+        ctx.moveTo(scopeX - lineLen, scopeY);
+        ctx.lineTo(scopeX + lineLen, scopeY);
+        // 垂直线
+        ctx.moveTo(scopeX, scopeY - lineLen);
+        ctx.lineTo(scopeX, scopeY + lineLen);
+        ctx.stroke();
+    } else {
+        // 其他武器 - 方框瞄准镜
+        let scopeSize = Math.min(SCREEN_WIDTH, SCREEN_HEIGHT) * 0.15 * scopeScale;
+        let halfSize = scopeSize / 2;
+        
+        // 方框边框（更细）
+        ctx.strokeStyle = 'rgba(100, 100, 100, 0.6)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(scopeX - halfSize, scopeY - halfSize, scopeSize, scopeSize);
+        
+        // 四角标记（更细更淡）
+        ctx.strokeStyle = 'rgba(120, 120, 120, 0.5)';
+        ctx.lineWidth = 1;
+        let cornerLen = scopeSize * 0.2;
+        // 左上角
+        ctx.beginPath();
+        ctx.moveTo(scopeX - halfSize, scopeY - halfSize + cornerLen);
+        ctx.lineTo(scopeX - halfSize, scopeY - halfSize);
+        ctx.lineTo(scopeX - halfSize + cornerLen, scopeY - halfSize);
+        ctx.stroke();
+        // 右上角
+        ctx.beginPath();
+        ctx.moveTo(scopeX + halfSize - cornerLen, scopeY - halfSize);
+        ctx.lineTo(scopeX + halfSize, scopeY - halfSize);
+        ctx.lineTo(scopeX + halfSize, scopeY - halfSize + cornerLen);
+        ctx.stroke();
+        // 左下角
+        ctx.beginPath();
+        ctx.moveTo(scopeX - halfSize, scopeY + halfSize - cornerLen);
+        ctx.lineTo(scopeX - halfSize, scopeY + halfSize);
+        ctx.lineTo(scopeX - halfSize + cornerLen, scopeY + halfSize);
+        ctx.stroke();
+        // 右下角
+        ctx.beginPath();
+        ctx.moveTo(scopeX + halfSize - cornerLen, scopeY + halfSize);
+        ctx.lineTo(scopeX + halfSize, scopeY + halfSize);
+        ctx.lineTo(scopeX + halfSize, scopeY + halfSize - cornerLen);
+        ctx.stroke();
+        
+        // 细十字线（在方框内）
+        ctx.strokeStyle = 'rgba(255, 100, 100, 0.5)';
+        ctx.lineWidth = 0.5;
+        let lineLen = halfSize * 0.7;
+        ctx.beginPath();
+        // 水平线
+        ctx.moveTo(scopeX - lineLen, scopeY);
+        ctx.lineTo(scopeX + lineLen, scopeY);
+        // 垂直线
+        ctx.moveTo(scopeX, scopeY - lineLen);
+        ctx.lineTo(scopeX, scopeY + lineLen);
+        ctx.stroke();
+    }
+    
+    // 中心红点（所有瞄准镜都有，更小更淡）
+    ctx.fillStyle = 'rgba(255, 50, 50, 0.8)';
+    ctx.beginPath();
+    ctx.arc(scopeX, scopeY, 2, 0, Math.PI * 2);
+    ctx.fill();
 }
 
 function renderSprites(zoom = 1, verticalOffset = 0) {
@@ -316,7 +467,7 @@ function renderSprites(zoom = 1, verticalOffset = 0) {
         
         let screenX = SCREEN_WIDTH / 2 + (relativeAngle / currentFOV) * SCREEN_WIDTH;
         let spriteHeight = (SCREEN_HEIGHT / dist) * ENEMY_TYPES[enemy.type].size * zoom;
-        let spriteWidth = spriteHeight * 0.8;
+        let spriteWidth = spriteHeight * 0.9;
         
         let brightness = Math.max(0.3, 1 - dist / MAX_DEPTH);
         let enemyColor = adjustBrightness(ENEMY_TYPES[enemy.type].color, brightness);
@@ -328,7 +479,27 @@ function renderSprites(zoom = 1, verticalOffset = 0) {
         let baseX = screenX;
         let baseY = SCREEN_HEIGHT / 2 - spriteHeight / 2 + verticalOffset;
         
-        drawEnemy(ctx, enemy.type, baseX, baseY, spriteWidth, spriteHeight, enemyColor, brightness);
+        if (ENEMY_TYPES[enemy.type].showOutline) {
+            ctx.save();
+            ctx.strokeStyle = enemyColor;
+            ctx.lineWidth = 3;
+            ctx.shadowColor = enemyColor;
+            ctx.shadowBlur = 15;
+            
+            ctx.beginPath();
+            ctx.arc(baseX, baseY + spriteHeight / 2, spriteWidth / 2, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(baseX, baseY + spriteHeight / 2, spriteWidth / 2 - 5, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            ctx.restore();
+        } else {
+            drawEnemy(ctx, enemy.type, baseX, baseY, spriteWidth, spriteHeight, enemyColor, brightness);
+        }
         
         ctx.fillStyle = '#333';
         ctx.fillRect(screenX - 15, baseY - 10, 30, 5);
@@ -439,6 +610,34 @@ function drawEnemy(ctx, type, x, y, w, h, color, brightness) {
         ctx.arc(x - w * 0.08, y + h * 0.12, w * 0.05, 0, Math.PI * 2);
         ctx.arc(x + w * 0.08, y + h * 0.12, w * 0.05, 0, Math.PI * 2);
         ctx.fill();
+        
+    } else if (type === 'shooter') {
+        ctx.beginPath();
+        ctx.ellipse(x, y + h * 0.5, w * 0.35, h * 0.3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = adjustBrightness('#2244aa', brightness);
+        ctx.fillRect(x - w * 0.3, y + h * 0.25, w * 0.6, h * 0.5);
+        
+        ctx.fillStyle = adjustBrightness('#6688ff', brightness);
+        ctx.beginPath();
+        ctx.arc(x, y + h * 0.2, w * 0.2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(x - w * 0.08, y + h * 0.18, w * 0.05, 0, Math.PI * 2);
+        ctx.arc(x + w * 0.08, y + h * 0.18, w * 0.05, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(x - w * 0.08, y + h * 0.18, w * 0.03, 0, Math.PI * 2);
+        ctx.arc(x + w * 0.08, y + h * 0.18, w * 0.03, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = adjustBrightness('#1a3388', brightness);
+        ctx.fillRect(x + w * 0.15, y + h * 0.35, w * 0.4, h * 0.08);
         
     } else if (type === 'boss') {
         ctx.fillStyle = '#8b0000';
@@ -656,7 +855,9 @@ function updatePlayer() {
     if (joystickActive && (Math.abs(joystickDeltaX) > 10 || Math.abs(joystickDeltaY) > 10)) {
         isMoving = true;
     }
-    let isSprinting = (keys['ShiftLeft'] || keys['ShiftRight']) && player.stamina > 0.5 && isMoving;
+    
+    // 疾跑条件：Shift键或虚拟疾跑按钮按下，且有体力
+    let isSprinting = (keys['ShiftLeft'] || keys['ShiftRight'] || virtualSprintActive) && player.stamina > 0.5 && isMoving;
     
     if (isScoped) {
         moveSpeed *= 0.5;
@@ -777,6 +978,9 @@ function reload() {
 function shoot() {
     if (player.ammo <= 0 || player.reloadTime > 0 || player.isReloading) return;
     
+    // 添加后坐力
+    weaponRecoil = 1;
+    
     const weapon = defaultStats[currentWeapon];
     let ammoCost = weapon.isDual ? 1 : 1;
     let bulletsToFire = weapon.isDual ? 2 : 1;
@@ -828,6 +1032,21 @@ function updateBullets() {
         if (bullet.life <= 0 || map[Math.floor(bullet.y)][Math.floor(bullet.x)] === 1) {
             bullets.splice(i, 1);
             continue;
+        }
+        
+        if (bullet.isEnemyBullet) {
+            let distToPlayer = Math.hypot(bullet.x - player.x, bullet.y - player.y);
+            if (distToPlayer < 0.5) {
+                player.health -= bullet.damage;
+                player.damageFlash = 30;
+                bullets.splice(i, 1);
+                updateUI();
+                
+                if (player.health <= 0) {
+                    gameOver();
+                }
+                continue;
+            }
         }
         
         for (let j = enemies.length - 1; j >= 0; j--) {
@@ -1023,9 +1242,27 @@ function updateEnemies() {
         }
         
         if (enemy.attackCooldown > 0) enemy.attackCooldown--;
+        if (enemy.lastShootTime > 0) enemy.lastShootTime--;
         
-        if (dist < 1.2 && enemy.attackCooldown === 0) {
-            player.health -= ENEMY_TYPES[enemy.type].damage;
+        let enemyType = ENEMY_TYPES[enemy.type];
+        
+        if (enemyType.isRanged && seesPlayer && dist < enemyType.attackRange) {
+            if (enemy.lastShootTime === 0) {
+                let bulletAngle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
+                bullets.push({
+                    x: enemy.x + Math.cos(bulletAngle) * enemyType.size,
+                    y: enemy.y + Math.sin(bulletAngle) * enemyType.size,
+                    vx: Math.cos(bulletAngle) * 0.15,
+                    vy: Math.sin(bulletAngle) * 0.15,
+                    vz: 0,
+                    life: 60,
+                    damage: enemyType.damage,
+                    isEnemyBullet: true
+                });
+                enemy.lastShootTime = enemyType.shootCooldown || 120;
+            }
+        } else if (dist < 1.2 && enemy.attackCooldown === 0) {
+            player.health -= enemyType.damage;
             player.damageFlash = 30;
             enemy.attackCooldown = 60;
             updateUI();
@@ -1201,8 +1438,8 @@ function updateShopButtons() {
 }
 
 function submitCheat() {
-    const password = document.getElementById('cheatInput').value;
-    if (password === '212599') {
+    const password = document.getElementById('cheatInput').value.toLowerCase();
+    if (password === 'coin') {
         player.score += 100000;
         document.getElementById('cheatMessage').textContent = '密码正确！获得100000金币！';
         document.getElementById('cheatMessage').style.color = '#00ff00';
@@ -1210,7 +1447,7 @@ function submitCheat() {
         setTimeout(() => {
             closeCheat();
         }, 2000);
-    } else if (password.toLowerCase() === 'kill') {
+    } else if (password === 'kill') {
         player.health = 0;
         document.getElementById('cheatMessage').textContent = '已执行自杀！';
         document.getElementById('cheatMessage').style.color = '#ff0000';
@@ -1218,8 +1455,16 @@ function submitCheat() {
             closeCheat();
             gameOver();
         }, 1000);
+    } else if (ENEMY_TYPES[password]) {
+        spawnEnemy(password);
+        document.getElementById('cheatMessage').textContent = `已生成一只 ${password}！`;
+        document.getElementById('cheatMessage').style.color = '#00ff00';
+        updateUI();
+        setTimeout(() => {
+            closeCheat();
+        }, 1500);
     } else {
-        document.getElementById('cheatMessage').textContent = '密码错误！';
+        document.getElementById('cheatMessage').textContent = '密码错误！可用怪物: zombie, demon, crawler, shooter, shadow, boss, bigBoss';
         document.getElementById('cheatMessage').style.color = '#ff0000';
     }
 }
@@ -1428,6 +1673,9 @@ function gameLoop(currentTime) {
 }
 
 function startGame() {
+    // 初始化武器模型画布
+    weaponModelCtx = DOM.weaponModel.getContext('2d');
+    
     currentWeapon = 'pistol';
     isScoped = false;
     player = {
@@ -1505,6 +1753,11 @@ function gameOver() {
     
     document.getElementById('finalScore').textContent = `最终分数: ${player.score}`;
     document.getElementById('gameOverScreen').style.display = 'flex';
+    
+    // 重置疾跑状态
+    sprintToggleState = false;
+    virtualSprintActive = false;
+    document.getElementById('sprintButton').classList.remove('active');
 }
 
 function togglePauseMenu() {
@@ -1685,8 +1938,11 @@ document.getElementById('toggleArrowKeys').addEventListener('click', toggleArrow
 document.getElementById('toggleSpaceShoot').addEventListener('click', toggleSpaceShoot);
 document.getElementById('toggleSeeThroughWalls').addEventListener('click', toggleSeeThroughWalls);
 document.getElementById('toggleRadar').addEventListener('click', toggleRadar);
+document.getElementById('toggleWeaponModel').addEventListener('click', toggleWeaponModel);
+document.getElementById('toggleScopeShake').addEventListener('click', toggleScopeShake);
 document.getElementById('toggleVirtualControls').addEventListener('click', toggleVirtualControls);
 document.getElementById('togglePortrait').addEventListener('click', togglePortrait);
+document.getElementById('toggleHalfScreenJoystick').addEventListener('click', toggleHalfScreenJoystick);
 document.getElementById('toggleAutoAim').addEventListener('click', toggleAutoAim);
 document.getElementById('autoAimSlider').addEventListener('input', function(e) {
     updateAutoAimStrength(e.target.value);
@@ -1720,6 +1976,12 @@ document.getElementById('cheatBtn').addEventListener('click', virtualOpenCheat);
 
 document.getElementById('quitButton').addEventListener('touchstart', virtualQuit);
 document.getElementById('quitButton').addEventListener('click', virtualQuit);
+
+// 疾跑按钮事件
+document.getElementById('sprintButton').addEventListener('touchstart', virtualSprintStart);
+document.getElementById('sprintButton').addEventListener('touchend', virtualSprintEnd);
+document.getElementById('sprintButton').addEventListener('mousedown', virtualSprintStart);
+document.getElementById('sprintButton').addEventListener('mouseup', virtualSprintEnd);
 
 // 虚拟摇杆事件
 const joystick = document.getElementById('joystick');
@@ -1865,6 +2127,18 @@ function toggleRadar() {
     toggle.classList.toggle('active');
 }
 
+function toggleWeaponModel() {
+    let toggle = document.getElementById('toggleWeaponModel');
+    weaponModelEnabled = !weaponModelEnabled;
+    toggle.classList.toggle('active');
+}
+
+function toggleScopeShake() {
+    let toggle = document.getElementById('toggleScopeShake');
+    scopeShakeEnabled = !scopeShakeEnabled;
+    toggle.classList.toggle('active');
+}
+
 function toggleVirtualControls() {
     let toggle = document.getElementById('toggleVirtualControls');
     virtualControlsEnabled = !virtualControlsEnabled;
@@ -1917,6 +2191,12 @@ function toggleAutoAim() {
     autoAimEnabled = !autoAimEnabled;
     toggle.classList.toggle('active');
     updateAutoAimEnabled();
+}
+
+function toggleHalfScreenJoystick() {
+    let toggle = document.getElementById('toggleHalfScreenJoystick');
+    halfScreenJoystick = !halfScreenJoystick;
+    toggle.classList.toggle('active');
 }
 
 function updateAutoAimStrength(value) {
@@ -1990,18 +2270,35 @@ function hasLineOfSight(x1, y1, x2, y2) {
 // 虚拟摇杆函数
 function joystickStart(e) {
     e.preventDefault();
+    
+    if (e.touches) {
+        joystickTouchId = e.touches[0].identifier;
+    }
+    
     joystickActive = true;
+    
+    let clientX, clientY;
+    if (e.touches) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+    } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+    }
+    
+    // 如果开启半屏模式且点击在左半边，移动摇杆到点击位置
+    if (halfScreenJoystick && clientX < window.innerWidth / 2) {
+        joystickContainer.style.left = (clientX - 60) + 'px';
+        joystickContainer.style.bottom = 'auto';
+        joystickContainer.style.top = (clientY - 60) + 'px';
+    }
+    
     const rect = joystickContainer.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
     
-    if (e.touches) {
-        joystickStartX = e.touches[0].clientX - centerX;
-        joystickStartY = e.touches[0].clientY - centerY;
-    } else {
-        joystickStartX = e.clientX - centerX;
-        joystickStartY = e.clientY - centerY;
-    }
+    joystickStartX = clientX - centerX;
+    joystickStartY = clientY - centerY;
     
     joystickDeltaX = 0;
     joystickDeltaY = 0;
@@ -2038,11 +2335,19 @@ function joystickMove(e) {
     joystick.style.transform = `translate(${joystickDeltaX}px, ${joystickDeltaY}px)`;
 }
 
-function joystickEnd() {
+function joystickEnd(e) {
     joystickActive = false;
     joystickDeltaX = 0;
     joystickDeltaY = 0;
+    joystickTouchId = null;
     joystick.style.transform = 'translate(-50%, -50%)';
+        
+    // 如果开启半屏模式，重置位置
+    if (halfScreenJoystick) {
+        joystickContainer.style.left = '';
+        joystickContainer.style.top = '';
+        joystickContainer.style.bottom = '30px';
+    }
 }
 
 // 视角控制滑块函数
@@ -2112,6 +2417,19 @@ function virtualShootStart(e) {
 function virtualShootEnd() {
     player.isShooting = false;
 }
+// 虚拟疾跑按钮（开关式）
+function virtualSprintStart(e) {
+    e.preventDefault();
+    if (gameRunning && !shopActive && !cheatActive && !weaponWheelActive && !pauseMenuActive) {
+        sprintToggleState = !sprintToggleState;
+        virtualSprintActive = sprintToggleState;
+        document.getElementById('sprintButton').classList.toggle('active', sprintToggleState);
+    }
+}
+
+function virtualSprintEnd(e) {
+    // 开关式，不需要在松开时关闭
+}
 
 // 虚拟换弹按钮
 function virtualReload(e) {
@@ -2163,6 +2481,615 @@ function virtualQuit(e) {
     e.preventDefault();
     if (gameRunning) {
         togglePauseMenu();
+    }
+}
+
+// 绘制伪3D武器模型
+function drawWeaponModel() {
+    if (!weaponModelCtx || !gameRunning || !weaponModelEnabled) {
+        if (weaponModelCtx) weaponModelCtx.clearRect(0, 0, DOM.weaponModel.width, DOM.weaponModel.height);
+        return;
+    }
+    
+    const ctx = weaponModelCtx;
+    const w = DOM.weaponModel.width;
+    const h = DOM.weaponModel.height;
+    
+    // 清空画布
+    ctx.clearRect(0, 0, w, h);
+    
+    // 如果换弹中，不显示武器
+    if (player.isReloading) {
+        let reloadProgress = 1 - (player.reloadTime / player.initialReloadTime);
+        
+        ctx.save();
+        ctx.translate(w * 0.7, h * 0.85);
+        
+        // 换弹动画 - 武器向右下方移动
+        let magOffsetX = 0;
+        let magOffsetY = 0;
+        
+        if (reloadProgress < 0.3) {
+            // 第一阶段：武器向右下移动
+            let t = reloadProgress / 0.3;
+            magOffsetX = t * 100;
+            magOffsetY = t * 80;
+        } else if (reloadProgress < 0.6) {
+            // 第二阶段：弹匣弹出
+            let t = (reloadProgress - 0.3) / 0.3;
+            magOffsetX = 100 + t * 30;
+            magOffsetY = 80;
+        } else if (reloadProgress < 0.85) {
+            // 第三阶段：新弹匣装入
+            let t = (reloadProgress - 0.6) / 0.25;
+            magOffsetX = 130 * (1 - t) + 100 * t;
+            magOffsetY = 80 * (1 - t);
+        } else {
+            // 第四阶段：武器复位
+            let t = (reloadProgress - 0.85) / 0.15;
+            magOffsetX = 100 * (1 - t);
+            magOffsetY = 80 * (1 - t);
+        }
+        
+        // 绘制武器
+        ctx.fillStyle = '#3a3a3a';
+        ctx.fillRect(-60 - magOffsetX, -25 - magOffsetY, 100, 40);
+        
+        // 弹匣（会分离）
+        ctx.fillStyle = '#1a1a1a';
+        ctx.fillRect(-15 - magOffsetX + 20, 15 - magOffsetY, 25, 30);
+        
+        ctx.restore();
+        
+        return;
+    }
+    
+    // 更新换弹进度
+    weaponReloadProgress = 0;
+    
+    // 竖屏模式检测
+    let isPortrait = portraitMode && window.innerHeight > window.innerWidth;
+    let portraitScale = isPortrait ? 0.5 : 1;
+    let portraitOffsetX = isPortrait ? w * 0.15 : 0;
+    let portraitOffsetY = isPortrait ? h * 0.05 : 0;
+    
+    // 计算武器位置 - 更靠右下方
+    let baseX = w * 0.8 + portraitOffsetX;
+    let baseY = h * 0.92 + portraitOffsetY;
+    
+    // 应用后坐力（更大）
+    let recoilOffset = weaponRecoil * 40 * portraitScale;
+    
+    // 应用行走晃动
+    let bobOffset = Math.sin(weaponBob) * 8 * portraitScale;
+    
+    // 开镜时武器缩小并稍微上移
+    let scopeOffset = 0;
+    let weaponScale = portraitScale;
+    if (isScoped) {
+        weaponScale *= 0.7;
+        recoilOffset *= 0.5;
+        bobOffset *= 0.3;
+    }
+    
+    // 武器颜色配置（更精细的颜色）
+    const weaponColors = {
+        pistol: { 
+            body: '#3a3a3a', bodyLight: '#5a5a5a', bodyDark: '#252525',
+            grip: '#2a1a0a', gripLight: '#3d2a15', 
+            metal: '#666666', metalLight: '#888888', metalDark: '#444444',
+            accent: '#e94560', muzzle: '#1a1a1a'
+        },
+        autoRifle: { 
+            body: '#2d2d2d', bodyLight: '#454545', bodyDark: '#1a1a1a',
+            bodyDark2: '#0f0f0f', rail: '#333333',
+            grip: '#1a1a1a', gripLight: '#2a2a2a',
+            metal: '#555555', metalLight: '#777777', metalDark: '#333333',
+            accent: '#ff6600', muzzle: '#222222', magazine: '#1a1a1a'
+        },
+        autoRiflePro: { 
+            body: '#252525', bodyLight: '#3d3d3d', bodyDark: '#111111',
+            bodyDark2: '#0a0a0a', rail: '#2a2a2a',
+            grip: '#151515', gripLight: '#222222',
+            metal: '#4a4a4a', metalLight: '#6a6a6a', metalDark: '#2a2a2a',
+            accent: '#00ff88', muzzle: '#1a1a1a', magazine: '#101010'
+        },
+        sniper: { 
+            body: '#1a1a1a', bodyLight: '#2a2a2a', bodyDark: '#0a0a0a',
+            bodyDark2: '#050505', rail: '#222222',
+            stock: '#1a1208', stockLight: '#2a1a0a', stockDark: '#0f0a05',
+            metal: '#444444', metalLight: '#666666', metalDark: '#222222',
+            accent: '#00aaff', muzzle: '#151515', 
+            scope: '#1a1a1a', scopeLens: '#004466'
+        },
+        lmg: { 
+            body: '#333333', bodyLight: '#4a4a4a', bodyDark: '#1a1a1a',
+            bodyDark2: '#0f0f0f',
+            barrel: '#222222', barrelDark: '#151515',
+            metal: '#555555', metalLight: '#777777', metalDark: '#333333',
+            accent: '#ffcc00', drum: '#ffaa00', grip: '#1a1a1a'
+        }
+    };
+    
+    let c = weaponColors[currentWeapon] || weaponColors.pistol;
+    
+    // 保存状态
+    ctx.save();
+    
+    // 移动到武器位置
+    ctx.translate(baseX, baseY + bobOffset + recoilOffset + scopeOffset);
+    
+    // 应用缩放（开镜时缩小）
+    ctx.scale(weaponScale, weaponScale);
+    
+    // 不旋转，保持枪口朝右（第一人称视角）
+    
+    // 根据武器类型绘制
+    if (currentWeapon === 'pistol') {
+        // === 手枪 ===
+        
+        // 枪身主体（带渐变效果）
+        ctx.fillStyle = c.body;
+        ctx.beginPath();
+        ctx.roundRect(-55, -28, 95, 38, 4);
+        ctx.fill();
+        
+        // 枪身上部导轨
+        ctx.fillStyle = c.bodyLight;
+        ctx.fillRect(-50, -30, 60, 6);
+        
+        // 枪管
+        ctx.fillStyle = c.metalDark;
+        ctx.fillRect(35, -20, 35, 14);
+        ctx.fillStyle = c.metal;
+        ctx.fillRect(35, -18, 35, 4);
+        
+        // 枪口
+        ctx.fillStyle = c.muzzle;
+        ctx.beginPath();
+        ctx.arc(70, -13, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(70, -13, 4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 握把
+        ctx.fillStyle = c.grip;
+        ctx.beginPath();
+        ctx.moveTo(-50, -5);
+        ctx.lineTo(-35, -5);
+        ctx.lineTo(-30, 35);
+        ctx.lineTo(-50, 35);
+        ctx.closePath();
+        ctx.fill();
+        
+        // 握把纹理
+        ctx.fillStyle = c.gripLight;
+        for (let i = 0; i < 5; i++) {
+            ctx.fillRect(-48, 0 + i * 6, 15, 2);
+        }
+        
+        // 扳机护圈
+        ctx.fillStyle = c.bodyDark;
+        ctx.beginPath();
+        ctx.arc(-25, 15, 15, 0, Math.PI);
+        ctx.fill();
+        
+        // 扳机
+        ctx.fillStyle = c.metal;
+        ctx.fillRect(-28, 5, 6, 15);
+        
+        // 滑套
+        ctx.fillStyle = c.bodyLight;
+        ctx.fillRect(-55, -28, 25, 38);
+        
+        // 准星
+        ctx.fillStyle = c.metalLight;
+        ctx.fillRect(-52, -35, 4, 8);
+        
+        // 击锤
+        ctx.fillStyle = c.metalDark;
+        ctx.beginPath();
+        ctx.moveTo(-55, -15);
+        ctx.lineTo(-60, -20);
+        ctx.lineTo(-55, -25);
+        ctx.closePath();
+        ctx.fill();
+        
+        // 弹匣释放按钮
+        ctx.fillStyle = c.accent;
+        ctx.fillRect(-10, 5, 8, 5);
+        
+    } else if (currentWeapon === 'autoRifle') {
+        // === 突击步枪 ===
+        
+        // 枪身主体
+        ctx.fillStyle = c.body;
+        ctx.fillRect(-80, -35, 150, 45);
+        
+        // 顶部导轨
+        ctx.fillStyle = c.rail;
+        ctx.fillRect(-75, -38, 120, 6);
+        for (let i = 0; i < 12; i++) {
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(-72 + i * 10, -37, 2, 4);
+        }
+        
+        // 枪托
+        ctx.fillStyle = c.bodyDark;
+        ctx.fillRect(-120, -30, 45, 35);
+        ctx.fillStyle = c.body;
+        ctx.fillRect(-118, -28, 40, 8);
+        ctx.fillRect(-118, -10, 40, 8);
+        
+        // 枪托橡胶垫
+        ctx.fillStyle = '#1a1a1a';
+        ctx.fillRect(-120, 0, 8, 20);
+        
+        // 枪管护套
+        ctx.fillStyle = c.bodyLight;
+        ctx.fillRect(60, -28, 50, 30);
+        ctx.fillStyle = c.bodyDark;
+        ctx.fillRect(65, -25, 40, 24);
+        
+        // 枪口
+        ctx.fillStyle = c.metalDark;
+        ctx.beginPath();
+        ctx.arc(110, -13, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = c.muzzle;
+        ctx.beginPath();
+        ctx.arc(110, -13, 6, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 消焰器
+        ctx.fillStyle = c.metal;
+        for (let i = 0; i < 4; i++) {
+            ctx.fillRect(108 + i * 3, -18 + i * 3, 4, 10 - i * 2);
+        }
+        
+        // 瞄准镜
+        ctx.fillStyle = c.bodyDark;
+        ctx.fillRect(-30, -55, 50, 20);
+        ctx.fillStyle = c.bodyLight;
+        ctx.fillRect(-28, -53, 46, 16);
+        ctx.fillStyle = c.accent;
+        ctx.fillRect(-10, -51, 20, 12);
+        // 镜片反光
+        ctx.fillStyle = 'rgba(0, 200, 255, 0.3)';
+        ctx.fillRect(-8, -50, 8, 10);
+        
+        // 弹匣
+        ctx.fillStyle = c.magazine;
+        ctx.beginPath();
+        ctx.moveTo(-20, 10);
+        ctx.lineTo(5, 10);
+        ctx.lineTo(10, 55);
+        ctx.lineTo(-25, 55);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = c.bodyDark;
+        ctx.fillRect(-18, 15, 20, 5);
+        
+        // 握把
+        ctx.fillStyle = c.grip;
+        ctx.beginPath();
+        ctx.moveTo(-40, 10);
+        ctx.lineTo(-25, 10);
+        ctx.lineTo(-20, 40);
+        ctx.lineTo(-45, 40);
+        ctx.closePath();
+        ctx.fill();
+        
+        // 前握把
+        ctx.fillStyle = c.bodyDark;
+        ctx.fillRect(20, 10, 15, 25);
+        
+        // 扳机
+        ctx.fillStyle = c.metal;
+        ctx.fillRect(-35, 10, 8, 20);
+        
+        // 保险
+        ctx.fillStyle = c.bodyLight;
+        ctx.fillRect(-80, -5, 15, 6);
+        
+    } else if (currentWeapon === 'autoRiflePro') {
+        // === 高级步枪 ===
+        
+        // 枪身主体（更流线型）
+        ctx.fillStyle = c.body;
+        ctx.beginPath();
+        ctx.moveTo(-85, -30);
+        ctx.lineTo(65, -30);
+        ctx.lineTo(65, 15);
+        ctx.lineTo(-85, 15);
+        ctx.closePath();
+        ctx.fill();
+        
+        // 顶部导轨（皮卡汀尼）
+        ctx.fillStyle = c.rail;
+        ctx.fillRect(-80, -35, 130, 8);
+        for (let i = 0; i < 14; i++) {
+            ctx.fillStyle = i % 2 === 0 ? '#2a2a2a' : '#333333';
+            ctx.fillRect(-78 + i * 9, -34, 7, 5);
+        }
+        
+        // 枪托（可折叠）
+        ctx.fillStyle = c.bodyDark;
+        ctx.beginPath();
+        ctx.moveTo(-85, -25);
+        ctx.lineTo(-110, -25);
+        ctx.lineTo(-115, 10);
+        ctx.lineTo(-85, 10);
+        ctx.closePath();
+        ctx.fill();
+        // 枪托沟槽
+        ctx.fillStyle = c.bodyDark2;
+        ctx.fillRect(-105, -20, 25, 3);
+        ctx.fillRect(-105, -10, 25, 3);
+        
+        // 枪管（更长）
+        ctx.fillStyle = c.metalDark;
+        ctx.fillRect(65, -22, 60, 18);
+        ctx.fillStyle = c.metal;
+        ctx.fillRect(65, -20, 60, 6);
+        
+        // 枪口螺纹
+        ctx.fillStyle = c.metal;
+        for (let i = 0; i < 6; i++) {
+            ctx.fillRect(120 + i * 2, -24, 1, 22);
+        }
+        
+        // 高级瞄准镜
+        ctx.fillStyle = c.bodyDark;
+        ctx.fillRect(-25, -58, 60, 25);
+        ctx.fillStyle = c.body;
+        ctx.fillRect(-22, -55, 54, 19);
+        // 镜片
+        ctx.fillStyle = c.scopeLens;
+        ctx.beginPath();
+        ctx.arc(25, -45, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(0, 150, 255, 0.4)';
+        ctx.beginPath();
+        ctx.arc(25, -45, 8, 0, Math.PI * 2);
+        ctx.fill();
+        // 十字线
+        ctx.strokeStyle = c.accent;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(17, -45);
+        ctx.lineTo(33, -45);
+        ctx.moveTo(25, -53);
+        ctx.lineTo(25, -37);
+        ctx.stroke();
+        
+        // 弹匣（STANAG）
+        ctx.fillStyle = c.magazine;
+        ctx.beginPath();
+        ctx.moveTo(-15, 15);
+        ctx.lineTo(15, 15);
+        ctx.lineTo(20, 60);
+        ctx.lineTo(-20, 60);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(-12, 20, 27, 35);
+        
+        // 握把（人体工学）
+        ctx.fillStyle = c.grip;
+        ctx.beginPath();
+        ctx.moveTo(-35, 15);
+        ctx.lineTo(-15, 15);
+        ctx.quadraticCurveTo(-10, 35, -20, 50);
+        ctx.lineTo(-40, 50);
+        ctx.quadraticCurveTo(-45, 35, -35, 15);
+        ctx.fill();
+        
+        // 散热孔
+        ctx.fillStyle = c.bodyDark2;
+        for (let i = 0; i < 5; i++) {
+            ctx.fillRect(0 + i * 12, -15, 8, 20);
+        }
+        
+    } else if (currentWeapon === 'sniper') {
+        // === 狙击步枪 ===
+        
+        // 主体
+        ctx.fillStyle = c.body;
+        ctx.fillRect(-100, -30, 180, 40);
+        
+        // 顶部导轨
+        ctx.fillStyle = c.rail;
+        ctx.fillRect(-95, -35, 140, 8);
+        
+        // 枪托（木质）
+        ctx.fillStyle = c.stock;
+        ctx.beginPath();
+        ctx.moveTo(-100, -25);
+        ctx.lineTo(-150, -25);
+        ctx.lineTo(-155, 10);
+        ctx.lineTo(-100, 10);
+        ctx.closePath();
+        ctx.fill();
+        // 枪托纹理
+        ctx.fillStyle = c.stockLight;
+        ctx.fillRect(-145, -20, 40, 3);
+        ctx.fillRect(-140, -10, 35, 3);
+        ctx.fillRect(-145, 0, 30, 3);
+        
+        // 枪托底板
+        ctx.fillStyle = c.metalDark;
+        ctx.fillRect(-155, -5, 8, 18);
+        
+        // 枪管
+        ctx.fillStyle = c.metalDark;
+        ctx.fillRect(75, -18, 70, 20);
+        ctx.fillStyle = c.metal;
+        ctx.fillRect(75, -15, 70, 6);
+        ctx.fillStyle = c.metalLight;
+        ctx.fillRect(75, -14, 70, 2);
+        
+        // 枪口
+        ctx.fillStyle = c.muzzle;
+        ctx.beginPath();
+        ctx.arc(145, -8, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(145, -8, 6, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 瞄准镜
+        ctx.fillStyle = c.scope;
+        ctx.fillRect(-20, -70, 90, 38);
+        ctx.fillStyle = c.bodyDark;
+        ctx.fillRect(-18, -68, 20, 34);
+        ctx.fillRect(60, -68, 12, 34);
+        
+        // 镜片
+        ctx.fillStyle = c.scopeLens;
+        ctx.beginPath();
+        ctx.arc(0, -50, 16, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(0, 100, 200, 0.5)';
+        ctx.beginPath();
+        ctx.arc(0, -50, 14, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 镜筒金属环
+        ctx.fillStyle = c.metal;
+        ctx.fillRect(-18, -68, 8, 34);
+        ctx.fillRect(52, -68, 8, 34);
+        
+        // 脚架
+        ctx.fillStyle = c.metalDark;
+        // 左脚架
+        ctx.beginPath();
+        ctx.moveTo(10, 10);
+        ctx.lineTo(0, 10);
+        ctx.lineTo(-5, 70);
+        ctx.lineTo(5, 70);
+        ctx.closePath();
+        ctx.fill();
+        // 右脚架
+        ctx.beginPath();
+        ctx.moveTo(50, 10);
+        ctx.lineTo(40, 10);
+        ctx.lineTo(35, 70);
+        ctx.lineTo(45, 70);
+        ctx.closePath();
+        ctx.fill();
+        // 脚架连接
+        ctx.fillRect(5, 10, 40, 8);
+        
+        // 弹匣
+        ctx.fillStyle = c.bodyDark;
+        ctx.beginPath();
+        ctx.moveTo(-10, 10);
+        ctx.lineTo(20, 10);
+        ctx.lineTo(25, 45);
+        ctx.lineTo(-15, 45);
+        ctx.closePath();
+        ctx.fill();
+        
+        // 扳机
+        ctx.fillStyle = c.metal;
+        ctx.fillRect(-25, 10, 10, 25);
+        
+        // 保险
+        ctx.fillStyle = c.bodyLight;
+        ctx.fillRect(-95, -5, 20, 8);
+        
+    } else if (currentWeapon === 'lmg') {
+        // === 轻机枪 ===
+        
+        // 主体（厚重）
+        ctx.fillStyle = c.body;
+        ctx.fillRect(-90, -38, 160, 55);
+        
+        // 顶部散热孔
+        ctx.fillStyle = c.bodyDark;
+        for (let i = 0; i < 8; i++) {
+            ctx.fillRect(-80 + i * 15, -35, 10, 25);
+        }
+        
+        // 枪管
+        ctx.fillStyle = c.barrel;
+        ctx.fillRect(65, -25, 55, 28);
+        ctx.fillStyle = c.metalDark;
+        ctx.beginPath();
+        ctx.arc(120, -11, 14, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 枪口
+        ctx.fillStyle = c.metal;
+        ctx.beginPath();
+        ctx.arc(120, -11, 10, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 弹鼓（圆形）
+        ctx.fillStyle = c.drum;
+        ctx.beginPath();
+        ctx.arc(0, 30, 40, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = c.accent;
+        ctx.beginPath();
+        ctx.arc(0, 30, 35, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = c.bodyDark;
+        ctx.beginPath();
+        ctx.arc(0, 30, 30, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#111';
+        ctx.beginPath();
+        ctx.arc(0, 30, 10, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 枪托
+        ctx.fillStyle = c.bodyDark;
+        ctx.fillRect(-130, -30, 45, 40);
+        ctx.fillStyle = c.body;
+        ctx.fillRect(-128, -28, 40, 10);
+        ctx.fillRect(-128, -8, 40, 10);
+        
+        // 把手
+        ctx.fillStyle = c.grip;
+        ctx.beginPath();
+        ctx.moveTo(-50, 17);
+        ctx.lineTo(-30, 17);
+        ctx.lineTo(-25, 55);
+        ctx.lineTo(-55, 55);
+        ctx.closePath();
+        ctx.fill();
+        
+        // 瞄准镜
+        ctx.fillStyle = c.bodyDark;
+        ctx.fillRect(-20, -55, 40, 20);
+        ctx.fillStyle = c.body;
+        ctx.fillRect(-18, -53, 36, 16);
+        ctx.fillStyle = c.accent;
+        ctx.fillRect(-5, -51, 10, 12);
+        
+        // 散热片
+        ctx.fillStyle = c.metalLight;
+        for (let i = 0; i < 6; i++) {
+            ctx.fillRect(70 + i * 8, -22, 3, 22);
+        }
+    }
+    
+    ctx.restore();
+    
+    // 更新后坐力
+    if (weaponRecoil > 0) {
+        weaponRecoil *= 0.85;
+        if (weaponRecoil < 0.01) weaponRecoil = 0;
+    }
+    
+    // 更新行走晃动
+    if (keys['KeyW'] || keys['KeyS'] || keys['KeyA'] || keys['KeyD'] || joystickActive) {
+        weaponBob += 0.15;
     }
 }
 
