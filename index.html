@@ -26,6 +26,7 @@
             <div class="reloadText">换弹中...</div>
         </div>
         <div id="scopeOverlay"></div>
+        <div id="rpgScopeOverlay"></div>
         <div id="damageOverlay"></div>
         <canvas id="weaponModel" width="800" height="600"></canvas>
         <div id="ui">
@@ -56,10 +57,10 @@
             
             <div id="settingsContent">
                 <!-- 游戏设置 -->
-                <div class="settingsTab" id="tabContentSensitivity">
+                <div class="settingsTab scrollable" id="tabContentSensitivity">
                     <label>
                         <span>视角灵敏度</span>
-                        <input type="range" id="sensitivitySlider" min="0.05" max="3" step="0.05" value="1">
+                        <input type="range" id="sensitivitySlider" min="0.01" max="3" step="0.01" value="1">
                         <span id="sensitivityValue">1.0x</span>
                     </label>
                     <label>
@@ -86,10 +87,20 @@
                         <span>开镜晃动<span class="experimental">实验性</span></span>
                         <div class="toggleSwitch" id="toggleScopeShake"></div>
                     </label>
+                    <label>
+                        <span>瞄准镜样式</span>
+                        <select id="scopeStyleSelector">
+                            <option value="classic">经典</option>
+                            <option value="dot">红点</option>
+                            <option value="holo">全息</option>
+                            <option value="simple">简洁</option>
+                            <option value="cross">十字</option>
+                        </select>
+                    </label>
                 </div>
                 
                 <!-- 移动端设置 -->
-                <div class="settingsTab" id="tabContentMobile" style="display: none;">
+                <div class="settingsTab scrollable" id="tabContentMobile" style="display: none;">
                     <label>
                         <span>虚拟按键<span class="experimental">实验性</span></span>
                         <div class="toggleSwitch" id="toggleVirtualControls"></div>
@@ -101,6 +112,14 @@
                     <label>
                         <span>半屏摇杆<span class="unavailable">不可用</span></span>
                         <div class="toggleSwitch" id="toggleHalfScreenJoystick"></div>
+                    </label>
+                    <label>
+                        <span>按键大小: <span id="buttonSizeValue">100%</span></span>
+                        <input type="range" id="buttonSizeSlider" min="50" max="200" step="10" value="100">
+                    </label>
+                    <label>
+                        <span>自动射击</span>
+                        <div class="toggleSwitch" id="toggleAutoShoot"></div>
                     </label>
                     <label>
                         <span>自动瞄准吸附</span>
@@ -217,6 +236,7 @@
                         </div>
                         <div class="shopColumn">
                             <button class="shopBtn" id="buyLightMachineGun">购买重机枪 (++伤害) - 2500金币</button>
+                            <button class="shopBtn" id="buyRPG">购买火箭筒 (+++范围伤害) - 8000金币</button>
                         </div>
                     </div>
                 </div>
@@ -250,6 +270,7 @@
             <button class="weaponBtn" id="weaponAutoRiflePro" data-weapon="autoRiflePro">自动步枪</button>
             <button class="weaponBtn" id="weaponSniper" data-weapon="sniper">射手步枪</button>
             <button class="weaponBtn" id="weaponLMG" data-weapon="lmg">轻机枪</button>
+            <button class="weaponBtn" id="weaponRPG" data-weapon="rpg">火箭筒</button>
         </div>
         <p id="currentWeapon">当前武器: 手枪</p>
     </div>
