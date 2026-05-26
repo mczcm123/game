@@ -192,6 +192,11 @@
             align-items: center;
             gap: 20px;
         }
+        .settingsTab.scrollable {
+            max-height: 60vh;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
         .settingsTab label {
             display: flex;
             flex-direction: row;
@@ -205,6 +210,16 @@
         #sensitivitySlider {
             width: 200px;
             cursor: pointer;
+        }
+        #scopeStyleSelector {
+            padding: 8px 12px;
+            border: 2px solid #e94560;
+            border-radius: 8px;
+            background: rgba(30, 30, 30, 0.8);
+            color: #e94560;
+            font-size: 16px;
+            cursor: pointer;
+            outline: none;
         }
         .toggleSwitch {
             position: relative;
@@ -448,6 +463,43 @@
         }
         #scopeOverlay.scoped {
             opacity: 1;
+        }
+        
+        /* RPG火箭筒瞄准镜 - 日字形 */
+        #rpgScopeOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s;
+        }
+        #rpgScopeOverlay.active {
+            opacity: 1;
+        }
+        #rpgScopeOverlay::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 120px;
+            height: 80px;
+            transform: translate(-50%, -50%);
+            border: 2px solid #ff6600;
+            border-radius: 4px;
+        }
+        #rpgScopeOverlay::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 120px;
+            height: 2px;
+            background: #ff6600;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 -25px 0 #ff6600, 0 25px 0 #ff6600;
         }
         
         /* 武器模型画布 */
