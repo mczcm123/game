@@ -1,983 +1,484 @@
-/* 全局实验性标签样式 - 在所有屏幕尺寸下都生效 */
-.experimental {
-    background-color: #8B5CF6 !important;
-    background: #8B5CF6 !important;
-    color: #ffffff !important;
-    padding: 2px 8px !important;
-    border-radius: 4px !important;
-    font-size: 12px !important;
-    font-weight: normal !important;
-    margin-left: 8px !important;
-    display: inline-block !important;
-    line-height: 1.5 !important;
-    border: none !important;
-    text-shadow: none !important;
-    box-shadow: none !important;
-}
-
-/* 不可用标签样式 */
-.unavailable {
-    background-color: #DC2626 !important;
-    background: #DC2626 !important;
-    color: #ffffff !important;
-    padding: 2px 8px !important;
-    border-radius: 4px !important;
-    font-size: 12px !important;
-    font-weight: normal !important;
-    margin-left: 8px !important;
-    display: inline-block !important;
-    line-height: 1.5 !important;
-    border: none !important;
-    text-shadow: none !important;
-    box-shadow: none !important;
-}
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            background: #1a1a2e;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            font-family: 'Courier New', monospace;
-            overflow: hidden;
-        }
-        #gameContainer {
-            position: relative;
-            border: 4px solid #e94560;
-            box-shadow: 0 0 30px rgba(233, 69, 96, 0.5);
-        }
-        #gameCanvas {
-            display: block;
-            background: #000;
-        }
-        #ui {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            color: #e94560;
-            font-size: 16px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-            z-index: 10;
-        }
-        #ui div {
-            margin: 5px 0;
-        }
-        #staminaBarContainer {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 300px;
-            height: 12px;
-            background: #333;
-            border: 2px solid #4CAF50;
-            border-radius: 6px;
-            overflow: hidden;
-            z-index: 10;
-        }
-        #staminaBar {
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to right, #4CAF50, #8BC34A);
-            transition: width 0.1s;
-        }
-        #startScreen, #gameOverScreen, #pauseMenu {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(26, 26, 46, 0.95);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: #e94560;
-            z-index: 25;
-        }
-        #version {
-            font-size: 18px;
-            color: #888;
-            margin: 10px 0 20px 0;
-            font-weight: normal;
-        }
-        #settingsScreen, #userCenterScreen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(26, 26, 46, 0.95);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: #e94560;
-            z-index: 25;
-        }
-        #userCenterScreen h1 {
-            color: #e94560;
-            margin-bottom: 20px;
-        }
-        #userInfo {
-            margin-bottom: 30px;
-            font-size: 18px;
-        }
-        #historyList {
-            width: 80%;
-            max-width: 600px;
-            max-height: 400px;
-            overflow-y: auto;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
-            padding: 20px;
-        }
-        .historyItem {
-            background: rgba(233, 69, 96, 0.1);
-            border: 1px solid rgba(233, 69, 96, 0.3);
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 10px;
-        }
-        .historyItem h3 {
-            color: #e94560;
-            margin: 0 0 10px 0;
-            font-size: 16px;
-        }
-        .historyItem p {
-            color: #fff;
-            margin: 5px 0;
-            font-size: 14px;
-        }
-        #noHistory {
-            color: #888;
-            text-align: center;
-            padding: 40px;
-        }
-        #settingsTabs {
-            display: flex;
-            gap: 10px;
-            margin: 20px 0;
-        }
-        .tabBtn {
-            padding: 12px 24px;
-            font-size: 16px;
-            background: transparent;
-            border: 2px solid #e94560;
-            color: #e94560;
-            cursor: pointer;
-            font-family: inherit;
-            transition: all 0.3s;
-        }
-        .tabBtn:hover {
-            background: #e94560;
-            color: #1a1a2e;
-        }
-        .tabBtn.active {
-            background: #e94560;
-            color: #1a1a2e;
-        }
-        #settingsContent {
-            min-width: 400px;
-            margin: 10px 0;
-        }
-        .settingsTab {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-        }
-        .settingsTab.scrollable {
-            max-height: 60vh;
-            overflow-y: auto;
-            padding-right: 10px;
-        }
-        .settingsTab label {
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: center;
-            gap: 20px;
-            font-size: 18px;
-            width: 100%;
-            max-width: 300px;
-        }
-        #sensitivitySlider {
-            width: 200px;
-            cursor: pointer;
-        }
-        #scopeStyleSelector {
-            padding: 8px 12px;
-            border: 2px solid #e94560;
-            border-radius: 8px;
-            background: rgba(30, 30, 30, 0.8);
-            color: #e94560;
-            font-size: 16px;
-            cursor: pointer;
-            outline: none;
-        }
-        .toggleSwitch {
-            position: relative;
-            width: 50px;
-            height: 26px;
-            background: #4a4a4a;
-            border-radius: 13px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        .toggleSwitch.active {
-            background: #e94560;
-        }
-        .toggleSwitch::after {
-            content: '';
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            width: 22px;
-            height: 22px;
-            background: white;
-            border-radius: 50%;
-            transition: transform 0.3s;
-        }
-        .toggleSwitch.active::after {
-            transform: translateX(24px);
-        }
-        
-        /* 移动端设置分组 */
-        .mobileSettings {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(233, 69, 96, 0.3);
-        }
-        .mobileSettings h3 {
-            color: #e94560;
-            font-size: 16px;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        .mobileSettings label {
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            max-width: 300px;
-            margin: 10px 0;
-            color: #ccc;
-        }
-        
-        #sensitivityValue {
-            font-weight: bold;
-            font-size: 20px;
-        }
-        .controlsGrid {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-        }
-        .controlsColumn {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            min-width: 180px;
-        }
-        .controlItem {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 15px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 5px;
-        }
-        .controlItem .key {
-            color: #00ff88;
-            font-weight: bold;
-        }
-        .controlItem .desc {
-            color: #fff;
-        }
-        #gameOverScreen, #pauseMenu {
-            display: none;
-        }
-        h1 {
-            font-size: 48px;
-            margin-bottom: 30px;
-            text-shadow: 0 0 20px #e94560;
-        }
-        .btn {
-            padding: 15px 40px;
-            font-size: 20px;
-            background: transparent;
-            border: 2px solid #e94560;
-            color: #e94560;
-            cursor: pointer;
-            margin: 10px;
-            font-family: inherit;
-            transition: all 0.3s;
-        }
-        .btn:hover {
-            background: #e94560;
-            color: #1a1a2e;
-        }
-        #controls {
-            margin-top: 30px;
-            font-size: 14px;
-            color: #eee;
-            text-align: center;
-            line-height: 1.8;
-        }
-        #minimap {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            border: 2px solid #e94560;
-            opacity: 0.7;
-        }
-        #crosshair {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 40px;
-            height: 40px;
-            pointer-events: none;
-            transition: opacity 0.1s;
-        }
-        #crosshair.scoped {
-            opacity: 0;
-            pointer-events: none;
-        }
-        #crosshair::before, #crosshair::after {
-            content: '';
-            position: absolute;
-            background: #e94560;
-        }
-        #crosshair::before {
-            width: 40px;
-            height: 40px;
-            left: 0;
-            top: 0;
-            background: transparent;
-        }
-        #crosshair::after {
-            width: 2px;
-            height: 12px;
-            left: 19px;
-            top: 0;
-        }
-        #crosshair .crosshair-up,
-        #crosshair .crosshair-down,
-        #crosshair .crosshair-left,
-        #crosshair .crosshair-right {
-            position: absolute;
-            background: #e94560;
-        }
-        #crosshair .crosshair-up {
-            width: 3px;
-            height: 12px;
-            left: 18.5px;
-            top: 0;
-        }
-        #crosshair .crosshair-down {
-            width: 3px;
-            height: 12px;
-            left: 18.5px;
-            bottom: 0;
-        }
-        #crosshair .crosshair-left {
-            width: 12px;
-            height: 3px;
-            left: 0;
-            top: 18.5px;
-        }
-        #crosshair .crosshair-right {
-            width: 12px;
-            height: 3px;
-            right: 0;
-            top: 18.5px;
-        }
-        #crosshair .crosshair-center {
-            position: absolute;
-            width: 6px;
-            height: 6px;
-            background: #e94560;
-            border-radius: 50%;
-            left: 17px;
-            top: 17px;
-        }
-        #reloadIndicator {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-        }
-        #reloadIndicator.active {
-            display: flex;
-        }
-        #reloadIndicator .reloadCircle {
-            width: 80px;
-            height: 80px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        #reloadIndicator .reloadProgress {
-            transition: stroke-dashoffset 0.05s linear;
-        }
-        #reloadIndicator .reloadText {
-            margin-top: 10px;
-            color: #e94560;
-            font-size: 16px;
-            font-weight: bold;
-            text-shadow: 0 0 10px rgba(233, 69, 96, 0.8);
-        }
-        #scopeOverlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at center, transparent 15%, rgba(0,0,0,0.3) 20%, rgba(0,0,0,0.85) 50%, rgba(0,0,0,0.95) 100%);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.15s;
-            overflow: hidden;
-        }
-        #scopeOverlay::before {
-            /* 已移除准星，由JS绘制 */
-        }
-        #scopeOverlay::after {
-            /* 已移除中心点，由JS绘制 */
-        }
-        #scopeOverlay.scoped {
-            opacity: 1;
-        }
-        
-        /* RPG火箭筒瞄准镜 - 日字形 */
-        #rpgScopeOverlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.15s;
-        }
-        #rpgScopeOverlay.active {
-            opacity: 1;
-        }
-        #rpgScopeOverlay::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 120px;
-            height: 80px;
-            transform: translate(-50%, -50%);
-            border: 2px solid #ff6600;
-            border-radius: 4px;
-        }
-        #rpgScopeOverlay::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 120px;
-            height: 2px;
-            background: #ff6600;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 -25px 0 #ff6600, 0 25px 0 #ff6600;
-        }
-        
-        /* 武器模型画布 */
-        #weaponModel {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 6;
-        }
-        #damageOverlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(transparent 20%, rgba(233, 69, 96, 0.7));
-            box-shadow: inset 0 0 100px rgba(233, 69, 96, 0.8);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.05s;
-        }
-        #shopScreen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(26, 26, 46, 0.95);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: #e94560;
-            z-index: 25;
-        }
-        .shopBtn {
-            padding: 12px 30px;
-            font-size: 16px;
-            background: transparent;
-            border: 2px solid #e94560;
-            color: #e94560;
-            cursor: pointer;
-            margin: 8px;
-            font-family: inherit;
-            transition: all 0.3s;
-            width: 300px;
-        }
-        .shopBtn:hover {
-            background: #e94560;
-            color: #1a1a2e;
-        }
-        .shopBtn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .shopBtn:disabled:hover {
-            background: transparent;
-            color: #e94560;
-        }
-        #shopCategories {
-            display: flex;
-            gap: 10px;
-            margin: 20px 0;
-        }
-        .categoryBtn {
-            padding: 12px 24px;
-            font-size: 16px;
-            background: transparent;
-            border: 2px solid #e94560;
-            color: #e94560;
-            cursor: pointer;
-            font-family: inherit;
-            transition: all 0.3s;
-        }
-        .categoryBtn:hover {
-            background: #e94560;
-            color: #1a1a2e;
-        }
-        .categoryBtn.active {
-            background: #e94560;
-            color: #1a1a2e;
-        }
-        #shopItems {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            margin: 10px 0;
-        }
-        .shopCategory {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-        }
-        .shopRow {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-        }
-        .shopColumn {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            align-items: center;
-        }
-        #cheatScreen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(26, 26, 46, 0.95);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: #e94560;
-            z-index: 30;
-        }
-        #cheatInput {
-            padding: 10px 20px;
-            font-size: 18px;
-            margin: 20px 0;
-            border: 2px solid #e94560;
-            background: transparent;
-            color: #e94560;
-            font-family: inherit;
-            text-align: center;
-        }
-        #cheatInput::placeholder {
-            color: #666;
-        }
-        #cheatMessage {
-            margin-top: 15px;
-            font-size: 14px;
-            min-height: 20px;
-        }
-        #weaponWheel {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(26, 26, 46, 0.95);
-            padding: 30px;
-            border-radius: 15px;
-            text-align: center;
-            z-index: 40;
-        }
-        #weaponsList {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin: 20px 0;
-        }
-        .weaponBtn {
-            padding: 12px 24px;
-            font-size: 16px;
-            border: 2px solid #e94560;
-            background: transparent;
-            color: #e94560;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .weaponBtn:hover:not(:disabled) {
-            background: #e94560;
-            color: #1a1a2e;
-        }
-        .weaponBtn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-        .weaponBtn.selected {
-            background: #e94560;
-            color: #1a1a2e;
-        }
-        #currentWeapon {
-            color: #00ff00;
-            font-weight: bold;
-        }
-        
-        /* 实验性标签样式 */
-        .experimental {
-            background: #8B5CF6;
-            color: #fff;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            margin-left: 8px;
-        }
-        
-        /* 虚拟按键样式 */
-        #virtualControls {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: auto;
-            z-index: 20;
-            display: none;
-        }
-        
-        #virtualControls.active {
-            display: block;
-        }
-        
-        /* 遥感控制 */
-        #joystickContainer {
-            position: absolute;
-            bottom: 30px;
-            left: 30px;
-            width: 120px;
-            height: 120px;
-            pointer-events: auto;
-        }
-        
-        #joystickBase {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(233, 69, 96, 0.3);
-            border-radius: 50%;
-            border: 3px solid rgba(233, 69, 96, 0.5);
-        }
-        
-        #joystick {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 50px;
-            height: 50px;
-            background: rgba(233, 69, 96, 0.8);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 0 20px rgba(233, 69, 96, 0.6);
-            touch-action: none;
-        }
-        
-        /* 射击按钮 */
-        #shootButton {
-            position: absolute;
-            bottom: 30px;
-            right: 30px;
-            width: 80px;
-            height: 80px;
-            background: rgba(233, 69, 96, 0.3);
-            border-radius: 50%;
-            border: 3px solid rgba(233, 69, 96, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            color: #e94560;
-            pointer-events: auto;
-            touch-action: none;
-        }
-        
-        #shootButton:active {
-            background: rgba(233, 69, 96, 0.6);
-            transform: scale(0.95);
-        }
-        
-        /* 换弹按钮 */
-        #reloadButton {
-            position: absolute;
-            bottom: 30px;
-            right: 120px;
-            width: 80px;
-            height: 80px;
-            background: rgba(233, 69, 96, 0.3);
-            border-radius: 50%;
-            border: 2px solid rgba(233, 69, 96, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            color: #e94560;
-            touch-action: none;
-            pointer-events: auto;
-        }
-        
-        #reloadButton:active {
-            background: rgba(233, 69, 96, 0.6);
-            transform: scale(0.95);
-        }
-        
-        /* 瞄准按钮 */
-        #scopeButton {
-            position: absolute;
-            bottom: 120px;
-            right: 30px;
-            width: 80px;
-            height: 80px;
-            background: rgba(233, 69, 96, 0.3);
-            border-radius: 50%;
-            border: 3px solid rgba(233, 69, 96, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            color: #e94560;
-            pointer-events: auto;
-            touch-action: none;
-        }
-        
-        #scopeButton:active {
-            background: rgba(233, 69, 96, 0.6);
-            transform: scale(0.95);
-        }
-        
-        /* 疾跑按钮 */
-        #sprintButton {
-            position: absolute;
-            bottom: 30px;
-            left: 160px;
-            width: 70px;
-            height: 70px;
-            background: rgba(255, 165, 0, 0.3);
-            border-radius: 50%;
-            border: 3px solid rgba(255, 165, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            color: #FFA500;
-            pointer-events: auto;
-            touch-action: none;
-            opacity: 0.7;
-        }
-        
-        #sprintButton.active {
-            background: rgba(255, 165, 0, 0.7);
-            opacity: 1;
-        }
-        
-        /* 功能按钮 */
-        #actionButtons {
-            position: absolute;
-            top: 22%;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            flex-direction: row;
-            gap: 20px;
-            pointer-events: auto;
-        }
-        
-        .actionBtn {
-            width: 50px;
-            height: 50px;
-            background: rgba(233, 69, 96, 0.3);
-            border-radius: 50%;
-            border: 2px solid rgba(233, 69, 96, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 18px;
-            color: #e94560;
-            touch-action: none;
-        }
-        
-        .actionBtn:active {
-            background: rgba(233, 69, 96, 0.6);
-            transform: scale(0.95);
-        }
-        
-        /* 视角控制滑块容器 */
-        #cameraSliderContainer {
-            position: absolute;
-            bottom: 20%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 200px;
-            height: 20px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
-            border: 2px solid rgba(233, 69, 96, 0.5);
-            touch-action: none;
-        }
-        
-        /* 视角控制滑块 */
-        #cameraSlider {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 50px;
-            height: 14px;
-            background: rgba(233, 69, 96, 0.6);
-            border-radius: 7px;
-            cursor: pointer;
-            touch-action: none;
-        }
-        
-        #cameraSlider:active {
-            background: rgba(233, 69, 96, 0.9);
-        }
-        
-        /* 退出按钮 */
-        #quitButton {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 50px;
-            height: 50px;
-            background: rgba(255, 0, 0, 0.3);
-            border-radius: 50%;
-            border: 2px solid rgba(255, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 18px;
-            color: #ff0000;
-            pointer-events: auto;
-            touch-action: none;
-        }
-        
-        #quitButton:active {
-            background: rgba(255, 0, 0, 0.6);
-            transform: scale(0.95);
-        }
-        
-        /* 竖屏模式 */
-/* 竖屏模式下的外层容器：全屏居中 */
-.portrait {
-    display: flex;          /* 弹性布局，用于居中 */
-    justify-content: center;/* 水平居中 */
-    align-items: center;    /* 垂直居中 */
-    min-height: 100vh;      /* 最小高度 = 屏幕高度 */
-    overflow: hidden;       /* 隐藏超出部分，防止滚动/白边 */
-    margin: 0;              /* 清除默认边距 */
+* {
+    margin: 0;
     padding: 0;
+    box-sizing: border-box;
 }
 
-/* 游戏容器：限制最大宽度，宽度100%自适应 */
-.portrait #gameContainer {
-    width: 100%; 
-    max-width: 480px;
-    height: auto;
-    aspect-ratio: 9/16;
+body {
+    font-family: 'Courier New', monospace;
+    background: linear-gradient(135deg, #1a1410 0%, #2d1f18 50%, #1a1410 100%);
+    min-height: 100vh;
+    color: #c4a574;
+    position: relative;
 }
 
-.portrait #gameCanvas {
-    width: 100%; 
-    height: 100%; 
-    object-fit: contain;
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(circle at 20% 80%, rgba(139, 69, 19, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 80% 20%, rgba(139, 69, 19, 0.1) 0%, transparent 40%),
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: -1;
 }
 
-/* 竖屏模式下设置界面的返回按钮往上提 */
-.portrait #settingsScreen {
-    justify-content: flex-start;
-    padding-top: 60px;
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
 }
 
-/* 竖屏模式下游戏说明改为2列 */
-.portrait .controlsGrid {
-    flex-wrap: wrap;
-    max-width: 400px;
-}
-.portrait .controlsColumn {
-    min-width: 150px;
-}
-
-/* 竖屏模式下商店按钮改为2列 */
-.portrait .shopRow {
-    flex-wrap: wrap;
-    max-width: 100%;
-}
-.portrait .shopColumn {
-    min-width: 45%;
-    flex: 1;
+/* Hero Section */
+.hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    background: linear-gradient(180deg, transparent 0%, rgba(26, 20, 16, 0.9) 100%);
 }
 
-/* 竖屏模式下瞄准镜适配 - 已移除，使用JS动态计算 */
+.hero-content {
+    text-align: center;
+    z-index: 10;
+}
+
+.game-title {
+    font-size: 6rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: #d4a574;
+    text-shadow: 
+        0 0 20px rgba(212, 165, 116, 0.5),
+        0 0 40px rgba(139, 69, 19, 0.3),
+        2px 2px 0 #8b4513,
+        -2px -2px 0 #cd853f;
+    animation: titleGlow 3s ease-in-out infinite alternate;
+    margin-bottom: 20px;
+    border-bottom: 3px solid #8b4513;
+    padding-bottom: 15px;
+}
+
+@keyframes titleGlow {
+    from {
+        filter: drop-shadow(0 0 20px rgba(212, 165, 116, 0.3));
+    }
+    to {
+        filter: drop-shadow(0 0 30px rgba(212, 165, 116, 0.6));
+    }
+}
+
+.game-subtitle {
+    font-size: 1.2rem;
+    color: #a08060;
+    letter-spacing: 0.5em;
+    margin-bottom: 50px;
+    text-transform: uppercase;
+}
+
+.play-btn {
+    padding: 20px 50px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background: linear-gradient(180deg, #8b4513 0%, #654321 50%, #4a3728 100%);
+    border: 3px solid #d4a574;
+    border-radius: 8px;
+    color: #d4a574;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 
+        0 5px 15px rgba(0, 0, 0, 0.5),
+        inset 0 2px 0 rgba(255, 255, 255, 0.1);
+}
+
+.play-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 
+        0 8px 25px rgba(0, 0, 0, 0.6),
+        inset 0 2px 0 rgba(255, 255, 255, 0.1),
+        0 0 20px rgba(212, 165, 116, 0.3);
+    background: linear-gradient(180deg, #a0522d 0%, #8b4513 50%, #654321 100%);
+}
+
+.play-btn:active {
+    transform: translateY(0);
+    box-shadow: 
+        0 2px 10px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.hero-decoration {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(ellipse at 50% 0%, rgba(139, 69, 19, 0.2) 0%, transparent 60%),
+        radial-gradient(ellipse at 30% 70%, rgba(101, 67, 33, 0.15) 0%, transparent 50%);
+}
+
+/* Features Section */
+.features {
+    padding: 100px 0;
+    position: relative;
+}
+
+.features::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #8b4513, transparent);
+}
+
+.features h2 {
+    text-align: center;
+    font-size: 2.2rem;
+    margin-bottom: 70px;
+    color: #d4a574;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    position: relative;
+}
+
+.features h2::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 2px;
+    background: #8b4513;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+}
+
+.feature-card {
+    background: linear-gradient(145deg, rgba(45, 31, 24, 0.8), rgba(26, 20, 16, 0.9));
+    border: 2px solid #5c4033;
+    border-radius: 4px;
+    padding: 35px 25px;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #8b4513, transparent);
+}
+
+.feature-card:hover {
+    border-color: #d4a574;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.feature-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 20px;
+    border: 2px solid #5c4033;
+    border-radius: 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    color: #d4a574;
+    background: rgba(139, 69, 19, 0.1);
+    transition: all 0.3s ease;
+}
+
+.feature-card:hover .feature-icon {
+    border-color: #d4a574;
+    background: rgba(139, 69, 19, 0.2);
+}
+
+.feature-card h3 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    color: #d4a574;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.feature-card p {
+    color: #a08060;
+    line-height: 1.7;
+    font-size: 0.95rem;
+}
+
+/* Weapons Showcase */
+.weapons-showcase {
+    padding: 100px 0;
+    background: rgba(139, 69, 19, 0.05);
+    position: relative;
+}
+
+.weapons-showcase::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #8b4513, transparent);
+}
+
+.weapons-showcase h2 {
+    text-align: center;
+    font-size: 2.2rem;
+    margin-bottom: 70px;
+    color: #d4a574;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    position: relative;
+}
+
+.weapons-showcase h2::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 2px;
+    background: #8b4513;
+}
+
+.weapons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 25px;
+}
+
+.weapon-card {
+    background: linear-gradient(180deg, rgba(60, 40, 25, 0.9), rgba(35, 25, 15, 0.95));
+    border: 2px solid #5c4033;
+    border-radius: 4px;
+    padding: 25px;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.weapon-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 10%;
+    width: 80%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #8b4513, transparent);
+}
+
+.weapon-card:hover {
+    border-color: #d4a574;
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+.weapon-icon {
+    width: 45px;
+    height: 45px;
+    margin: 0 auto 15px;
+    border: 1px solid #5c4033;
+    border-radius: 3px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2rem;
+    color: #d4a574;
+    background: rgba(139, 69, 19, 0.15);
+}
+
+.weapon-card h4 {
+    font-size: 1rem;
+    margin-bottom: 10px;
+    color: #d4a574;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.weapon-card p {
+    color: #a08060;
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+/* How to Play */
+.how-to-play {
+    padding: 100px 0;
+    position: relative;
+}
+
+.how-to-play::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #8b4513, transparent);
+}
+
+.how-to-play h2 {
+    text-align: center;
+    font-size: 2.2rem;
+    margin-bottom: 70px;
+    color: #d4a574;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    position: relative;
+}
+
+.how-to-play h2::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 2px;
+    background: #8b4513;
+}
+
+.controls-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 40px;
+}
+
+.control-section {
+    background: linear-gradient(145deg, rgba(45, 31, 24, 0.8), rgba(26, 20, 16, 0.9));
+    border: 2px solid #5c4033;
+    border-radius: 4px;
+    padding: 40px 30px;
+    position: relative;
+}
+
+.control-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, #8b4513, #d4a574, #8b4513);
+}
+
+.control-section h3 {
+    font-size: 1.15rem;
+    margin-bottom: 25px;
+    color: #d4a574;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.control-section ul {
+    list-style: none;
+}
+
+.control-section li {
+    padding: 15px 0;
+    border-bottom: 1px solid rgba(139, 69, 19, 0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.95rem;
+}
+
+.control-section li:last-child {
+    border-bottom: none;
+}
+
+.control-section span {
+    background: rgba(139, 69, 19, 0.3);
+    padding: 6px 14px;
+    border: 1px solid #5c4033;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    color: #d4a574;
+    letter-spacing: 0.05em;
+}
+
+/* Footer */
+footer {
+    padding: 50px 0;
+    text-align: center;
+    background: rgba(139, 69, 19, 0.1);
+    color: #8b7355;
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    border-top: 1px solid rgba(139, 69, 19, 0.3);
+}
+
+footer p {
+    text-transform: uppercase;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .game-title {
+        font-size: 3rem;
+        letter-spacing: 0.1em;
+    }
+
+    .game-subtitle {
+        font-size: 0.9rem;
+        letter-spacing: 0.3em;
+    }
+
+    .play-btn {
+        padding: 15px 35px;
+        font-size: 1rem;
+    }
+
+    .features h2,
+    .weapons-showcase h2,
+    .how-to-play h2 {
+        font-size: 1.6rem;
+    }
+
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .weapons-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .control-section {
+        padding: 25px 20px;
+    }
+
+    .control-section li {
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+    }
+}
