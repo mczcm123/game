@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>末日余生 - byZCM</title>
+    <link rel="icon" href="icon.png" type="image/png">
+    <link rel="stylesheet" href="game.css">
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <canvas id="minimap" width="150" height="150"></canvas>
+        <div id="crosshair">
+            <div class="crosshair-up"></div>
+            <div class="crosshair-down"></div>
+            <div class="crosshair-left"></div>
+            <div class="crosshair-right"></div>
+            <div class="crosshair-center"></div>
+        </div>
+        <div id="reloadIndicator">
+            <svg class="reloadCircle" viewBox="0 0 100 100">
+                <circle class="reloadBackground" cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="4"/>
+                <circle class="reloadProgress" cx="50" cy="50" r="45" fill="none" stroke="#e94560" stroke-width="4" stroke-linecap="round" stroke-dasharray="283" stroke-dashoffset="283" transform="rotate(-90 50 50)"/>
+            </svg>
+            <div class="reloadText">换弹中...</div>
+        </div>
+        <div id="scopeOverlay"></div>
+        <div id="rpgScopeOverlay"></div>
+        <div id="damageOverlay"></div>
+        <canvas id="weaponModel" width="800" height="600"></canvas>
+        <div id="ui">
+            <div id="health">生命: 150</div>
+            <div id="ammo">弹药: 100</div>
+            <div id="score">金币: 0</div>
+            <div id="wave">波次: 1</div>
+            <div id="enemies">敌人: 0</div>
+        </div>
+        <div id="staminaBarContainer">
+            <div id="staminaBar"></div>
+        </div>
+        <div id="startScreen">
+            <h1>末日余生</h1>
+            <p id="version">V1.0.4</p>
+            <button class="btn" id="startBtn">开始游戏</button>
+            <button class="btn" id="settingsBtn">设置</button>
+            <button class="btn" id="userCenterBtn">用户中心</button>
+        </div>
+        <div id="settingsScreen" style="display: none;">
+            <h1>设置</h1>
+            
+            <div id="settingsTabs">
+                <button class="tabBtn active" id="tabSensitivity">游戏设置</button>
+                <button class="tabBtn" id="tabMobile">移动端设置</button>
+                <button class="tabBtn" id="tabControls">游戏说明</button>
+            </div>
+            
+            <div id="settingsContent">
+                <!-- 游戏设置 -->
+                <div class="settingsTab scrollable" id="tabContentSensitivity">
+                    <label>
+                        <span>视角灵敏度</span>
+                        <input type="range" id="sensitivitySlider" min="0.01" max="3" step="0.01" value="1">
+                        <span id="sensitivityValue">1.0x</span>
+                    </label>
+                    <label>
+                        <span>方向键移动</span>
+                        <div class="toggleSwitch" id="toggleArrowKeys"></div>
+                    </label>
+                    <label>
+                        <span>空格键射击</span>
+                        <div class="toggleSwitch" id="toggleSpaceShoot"></div>
+                    </label>
+                    <label>
+                        <span>透视敌人</span>
+                        <div class="toggleSwitch active" id="toggleSeeThroughWalls"></div>
+                    </label>
+                    <label>
+                        <span>敌人雷达<span class="experimental">实验性</span></span>
+                        <div class="toggleSwitch" id="toggleRadar"></div>
+                    </label>
+                    <label>
+                        <span>武器模型<span class="experimental">实验性</span></span>
+                        <div class="toggleSwitch active" id="toggleWeaponModel"></div>
+                    </label>
+                    <label>
+                        <span>开镜晃动<span class="experimental">实验性</span></span>
+                        <div class="toggleSwitch" id="toggleScopeShake"></div>
+                    </label>
+                    <label>
+                        <span>瞄准镜样式</span>
+                        <select id="scopeStyleSelector">
+                            <option value="classic">经典</option>
+                            <option value="dot">红点</option>
+                            <option value="holo">全息</option>
+                            <option value="simple">简洁</option>
+                            <option value="cross">十字</option>
+                        </select>
+                    </label>
+                </div>
+                
+                <!-- 移动端设置 -->
+                <div class="settingsTab scrollable" id="tabContentMobile" style="display: none;">
+                    <label>
+                        <span>虚拟按键<span class="experimental">实验性</span></span>
+                        <div class="toggleSwitch" id="toggleVirtualControls"></div>
+                    </label>
+                    <label>
+                        <span>竖屏模式</span>
+                        <div class="toggleSwitch" id="togglePortrait"></div>
+                    </label>
+                    <label>
+                        <span>半屏摇杆<span class="unavailable">不可用</span></span>
+                        <div class="toggleSwitch" id="toggleHalfScreenJoystick"></div>
+                    </label>
+                    <label>
+                        <span>按键大小: <span id="buttonSizeValue">100%</span></span>
+                        <input type="range" id="buttonSizeSlider" min="50" max="200" step="10" value="100">
+                    </label>
+                    <label>
+                        <span>自动射击</span>
+                        <div class="toggleSwitch" id="toggleAutoShoot"></div>
+                    </label>
+                    <label>
+                        <span>自动瞄准吸附</span>
+                        <div class="toggleSwitch" id="toggleAutoAim" disabled></div>
+                    </label>
+                    <label>
+                        <span>吸附强度: <span id="autoAimValue">50%</span></span>
+                        <input type="range" id="autoAimSlider" min="10" max="180" step="5" value="90" disabled>
+                    </label>
+                </div>
+                
+                <!-- 游戏说明 -->
+                <div class="settingsTab" id="tabContentControls" style="display: none;">
+                    <h2>操作说明</h2>
+                    <div class="controlsGrid">
+                        <div class="controlsColumn">
+                            <div class="controlItem">
+                                <span class="key">WASD / 方向键</span>
+                                <span class="desc">移动</span>
+                            </div>
+                            <div class="controlItem">
+                                <span class="key">Shift</span>
+                                <span class="desc">冲刺</span>
+                            </div>
+                            <div class="controlItem">
+                                <span class="key">鼠标左键 / 空格</span>
+                                <span class="desc">射击</span>
+                            </div>
+                        </div>
+                        <div class="controlsColumn">
+                            <div class="controlItem">
+                                <span class="key">鼠标移动</span>
+                                <span class="desc">视角控制</span>
+                            </div>
+                            <div class="controlItem">
+                                <span class="key">鼠标右键</span>
+                                <span class="desc">开镜瞄准</span>
+                            </div>
+                            <div class="controlItem">
+                                <span class="key">R</span>
+                                <span class="desc">换弹</span>
+                            </div>
+                        </div>
+                        <div class="controlsColumn">
+                            <div class="controlItem">
+                                <span class="key">5</span>
+                                <span class="desc">打开商店</span>
+                            </div>
+                            <div class="controlItem">
+                                <span class="key">8</span>
+                                <span class="desc">打开武器轮盘</span>
+                            </div>
+                            <div class="controlItem">
+                                <span class="key">0</span>
+                                <span class="desc">打开密码界面</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn" id="closeSettingsBtn">返回</button>
+        </div>
+        <div id="userCenterScreen" style="display: none;">
+            <h1>用户中心</h1>
+            <div id="userInfo">
+                <p>用户ID: <span id="userId">加载中...</span></p>
+            </div>
+            <h2>游戏历史记录</h2>
+            <div id="historyList">
+                <p id="noHistory">暂无历史记录</p>
+            </div>
+            <button class="btn" id="closeUserCenterBtn">返回</button>
+        </div>
+        <div id="gameOverScreen" style="display: none;">
+            <h1>游戏结束</h1>
+            <p id="finalScore">最终分数: 0</p>
+            <button class="btn" id="restartBtn">重新开始</button>
+            <button class="btn" id="backToMenuBtn">回到主页</button>
+        </div>
+        <div id="pauseMenu" style="display: none;">
+            <h1>游戏暂停</h1>
+            <button class="btn" id="resumeBtn">继续游戏</button>
+            <button class="btn" id="quitBtn">结束游戏</button>
+        </div>
+        <div id="shopScreen" style="display: none;">
+            <h1>商店</h1>
+            <p id="shopCoins">金币: 0</p>
+            
+            <div id="shopCategories">
+                <button class="categoryBtn active" id="catMedical">医疗</button>
+                <button class="categoryBtn" id="catEquipment">装备</button>
+                <button class="categoryBtn" id="catAmmo">弹药</button>
+                <button class="categoryBtn" id="catInjectors">针剂</button>
+            </div>
+            
+            <div id="shopItems">
+                <!-- 医疗分类 -->
+                <div class="shopCategory" id="catContentMedical">
+                    <button class="shopBtn" id="buyHealth">购买补血药 (+20生命) - 500金币</button>
+                    <button class="shopBtn" id="buyMaxHealth">购买强化药 (+10生命上限) - 1000金币</button>
+                </div>
+                
+                <!-- 装备分类 -->
+                <div class="shopCategory" id="catContentEquipment" style="display: none;">
+                    <div class="shopRow">
+                        <div class="shopColumn">
+                            <button class="shopBtn" id="buyAutoRifleNormal">购买高速自动步枪 (++连射，-伤害) - 1500金币</button>
+                            <button class="shopBtn" id="buyAutoRifle">购买自动步枪 (+连射，+伤害) - 2000金币</button>
+                        </div>
+                        <div class="shopColumn">
+                            <button class="shopBtn" id="buySniperRifle">购买射手步枪 (+++伤害,--射速) - 3000金币</button>
+                            <button class="shopBtn" id="buyChestRig">购买胸挂 (弹药上限+500) - 1500金币</button>
+                        </div>
+                        <div class="shopColumn">
+                            <button class="shopBtn" id="buyLightMachineGun">购买重机枪 (++伤害) - 2500金币</button>
+                            <button class="shopBtn" id="buyRPG">购买火箭筒 (+++范围伤害) - 8000金币</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 弹药分类 -->
+                <div class="shopCategory" id="catContentAmmo" style="display: none;">
+                    <button class="shopBtn" id="buyAmmo">购买弹药 (+50发子弹) - 800金币</button>
+                </div>
+                
+                <!-- 针剂分类 -->
+                <div class="shopCategory" id="catContentInjectors" style="display: none;">
+                    <button class="shopBtn" id="buyStaminaSlow">体力针 (体力消耗减慢50%) - 1200金币</button>
+                    <button class="shopBtn" id="buyStaminaFast">体力回复针 (体力回复加快100%) - 1500金币</button>
+                </div>
+            </div>
+            
+            <button class="btn" id="closeShop">离开商店</button>
+        </div>
+    <div id="cheatScreen" style="display: none;">
+        <h1>输入密码</h1>
+        <input type="password" id="cheatInput" placeholder="请输入密码" maxlength="10">
+        <button class="btn" id="submitCheat">确认</button>
+        <button class="btn" id="closeCheat">取消</button>
+        <p id="cheatMessage"></p>
+    </div>
+    <div id="weaponWheel" style="display: none;">
+        <h2>武器轮盘</h2>
+        <div id="weaponsList">
+            <button class="weaponBtn" id="weaponPistol" data-weapon="pistol">手枪 (默认)</button>
+            <button class="weaponBtn" id="weaponAutoRifle" data-weapon="autoRifle">高速自动步枪</button>
+            <button class="weaponBtn" id="weaponAutoRiflePro" data-weapon="autoRiflePro">自动步枪</button>
+            <button class="weaponBtn" id="weaponSniper" data-weapon="sniper">射手步枪</button>
+            <button class="weaponBtn" id="weaponLMG" data-weapon="lmg">轻机枪</button>
+            <button class="weaponBtn" id="weaponRPG" data-weapon="rpg">火箭筒</button>
+        </div>
+        <p id="currentWeapon">当前武器: 手枪</p>
+    </div>
+    
+    <!-- 虚拟按键 -->
+    <div id="virtualControls">
+        <!-- 退出按钮 -->
+        <div id="quitButton" title="退出游戏">✕</div>
+        
+        <!-- 遥感控制 -->
+        <div id="joystickContainer">
+            <div id="joystickBase"></div>
+            <div id="joystick"></div>
+        </div>
+        
+        <!-- 疾跑按钮 -->
+        <div id="sprintButton" title="疾跑(Shift)">疾跑开关</div>
+        
+        <!-- 射击按钮 -->
+        <div id="shootButton" title="射击">射击</div>
+        
+        <!-- 换弹按钮 -->
+        <div id="reloadButton" title="换弹(R)">换弹</div>
+        
+        <!-- 瞄准按钮 -->
+        <div id="scopeButton" title="开镜瞄准(右键)">瞄准</div>
+        
+        <!-- 功能按钮 -->
+        <div id="actionButtons">
+            <div class="actionBtn" id="shopBtn" title="商店">商店</div>
+            <div class="actionBtn" id="weaponBtn" title="武器轮盘">武器</div>
+            <div class="actionBtn" id="cheatBtn" title="作弊菜单">密码</div>
+        </div>
+        
+        <!-- 视角控制滑块 -->
+        <div id="cameraSliderContainer">
+            <div id="cameraSlider"></div>
+        </div>
+    </div>
+</div>
+<script src="game.js"></script>
+</body>
+</html>
